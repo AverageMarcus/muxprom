@@ -21,6 +21,12 @@ Include any changes from your merge request in this section with the appropriate
 
 ---
 
+## [1.0.1]
+
+### Fixed
+
+- Don't record metrics on the metrics endpoint
+
 ## [1.0.0]
 
 ### Added

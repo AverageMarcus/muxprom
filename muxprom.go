@@ -35,7 +35,7 @@ func (m *MuxProm) RegisterPrometheus(router *mux.Router) error {
 	)
 
 	router.Handle(m.MetricsPath, promhttp.Handler()).Methods("GET")
-	router.Use(recordMetrics(histogram))
+	router.Use(m.recordMetrics(histogram))
 
 	if router.NotFoundHandler == nil {
 		router.NotFoundHandler = router.NewRoute().HandlerFunc(http.NotFound).GetHandler()
@@ -44,9 +44,15 @@ func (m *MuxProm) RegisterPrometheus(router *mux.Router) error {
 	return prometheus.Register(histogram)
 }
 
-func recordMetrics(histogram *prometheus.HistogramVec) mux.MiddlewareFunc {
+func (m *MuxProm) recordMetrics(histogram *prometheus.HistogramVec) mux.MiddlewareFunc {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Don't record metrics for the metrics endpoint
+			if r.URL.Path == m.MetricsPath {
+				next.ServeHTTP(w, r)
+				return
+			}
+
 			start := time.Now()
 			mrw := newMetricsResponseWriter(w)
 
